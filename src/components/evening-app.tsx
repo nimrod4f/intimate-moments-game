@@ -606,6 +606,11 @@ function CardAction({ card }: { card: GameCard }) {
 }
 const scenes = [
   {
+    title: "Bitter Moon",
+    sub: "סצנת החלב · דקה 40 · להשכרה",
+    href: "https://www.justwatch.com/il/search?q=bitter+moon",
+  },
+  {
     title: "365 Days",
     sub: "סצנת היאכטה · דקה 1:07",
     href: "https://www.netflix.com/search?q=365+days",
