@@ -52,17 +52,29 @@ function DiceGame(){
  const [watchOpen,setWatchOpen]=useState(false);
  const [askLevel,setAskLevel]=useState(false);
  const [votes,setVotes]=useState<[boolean|null,boolean|null]>([null,null]);
+ const [locked,setLocked]=useState<(string|null)[]>([null,null,null]);
+ const [prevLocked,setPrevLocked]=useState<(string|null)[]>([null,null,null]);
+ const [editing,setEditing]=useState<number|null>(null);
+ const [draft,setDraft]=useState("");
  const cleanup=useRef<number[]>([]);
  useEffect(()=>()=>{cleanup.current.forEach(id=>window.clearTimeout(id))},[]);
  const roll=()=>{
-  if(spinning)return;setResult(null);setSpinning(true);
-  const finals=pools.map(p=>p[Math.floor(Math.random()*p.length)]!);
-  const settled=pools.map(()=>false);
+  if(spinning)return;setResult(null);setEditing(null);setSpinning(true);
+  const finals=pools.map((p,i)=>locked[i]??p[Math.floor(Math.random()*p.length)]!);
+  const settled=pools.map((_,i)=>locked[i]!==null);
   const spin=window.setInterval(()=>setReels(pools.map((p,i)=>settled[i]?finals[i]!:p[Math.floor(Math.random()*p.length)]!)),70);
-  pools.forEach((_,i)=>{const t=window.setTimeout(()=>{settled[i]=true;clickSound();setReels(r=>r.map((v,j)=>j===i?finals[i]!:v))},700+i*350);cleanup.current.push(t)});
+  pools.forEach((_,i)=>{if(locked[i]!==null)return;const t=window.setTimeout(()=>{settled[i]=true;clickSound();setReels(r=>r.map((v,j)=>j===i?finals[i]!:v))},700+i*350);cleanup.current.push(t)});
   const end=window.setTimeout(()=>{window.clearInterval(spin);setReels(finals);setSpinning(false);setResult(finals)},700+pools.length*350);
   cleanup.current.push(end);
  };
+ const lockedCount=locked.filter(Boolean).length;
+ const toggleLock=(i:number)=>{
+  if(spinning)return;
+  if(locked[i]!==null){setLocked(l=>l.map((v,j)=>j===i?null:v));return}
+  if(lockedCount>=2)return;
+  setDraft("");setEditing(i);
+ };
+ const confirmLock=(i:number)=>{const text=draft.trim();if(!text)return;setLocked(l=>l.map((v,j)=>j===i?text:v));setReels(r=>r.map((v,j)=>j===i?text:v));setEditing(null)};
  const turnName=state.names[state.diceTurn];
  const canPass=!state.dicePasses[state.diceTurn];
  const usePass=()=>{setState(s=>({...s,dicePasses:s.dicePasses.map((v,i)=>i===s.diceTurn?true:v) as [boolean,boolean]}));roll()};
