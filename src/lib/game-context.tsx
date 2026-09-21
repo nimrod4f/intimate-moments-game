@@ -70,7 +70,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     try {
       const saved = localStorage.getItem("evening-game");
       if (saved) setState({ ...initial, ...JSON.parse(saved) });
-    } catch {}
+    } catch { /* ignore */ }
     setHydrated(true);
   }, []);
   useEffect(() => {
