@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 const places=[{icon:"🛏️",label:"בחדר"},{icon:"🛋️",label:"בסלון"},{icon:"🌙",label:"בחוץ"}];
 const drinks=[{icon:"🍺",label:"בירה"},{icon:"🍷",label:"יין"},{icon:"🍸",label:"קוקטייל"}];
 const categoryMeta:Record<Category,{title:string;icon:string;className:string}>={closeness:{title:"קרבה",icon:"❤️",className:"category-closeness"},tension:{title:"מתח",icon:"🔥",className:"category-tension"},bold:{title:"נועז",icon:"😈",className:"category-bold"}};
-const animatedScreens:GameScreen[]=["welcome","place","drink","names","write1","pass2","choose1","write2","pass1","choose2","summary","menu","categories","finish"];
+const animatedScreens:GameScreen[]=["welcome","place","drink","names","write1","pass2","choose1","write2","pass1","choose2","summary","menu","categories","finish","diceLevel","diceFinish"];
 
 function Shell({children,compact=false}:{children:React.ReactNode;compact?:boolean}){return <main className="min-h-dvh overflow-hidden bg-background text-foreground"><div className={`mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 ${compact?"py-6":"py-10"}`}>{children}</div></main>}
 function Brand(){return <div className="mb-10 flex items-center justify-between"><span className="font-display text-xl font-semibold text-primary">משחק מקדים</span><Moon className="h-5 w-5 text-accent" strokeWidth={1.5}/></div>}
