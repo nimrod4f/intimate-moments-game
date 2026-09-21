@@ -660,7 +660,9 @@ function TimerOverlay({
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 0.8);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [left, running]);
   const progress = ((seconds - left) / seconds) * 100;
@@ -793,7 +795,9 @@ function clickSound() {
     g.connect(ctx.destination);
     o.start();
     o.stop(ctx.currentTime + 0.15);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function DiceLevel() {
