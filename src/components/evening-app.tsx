@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cards, type Category, type GameCard } from "@/data/cards";
 import { levels, levelOrder, timeSeconds } from "@/data/dice";
+import { boxSteps } from "@/data/box";
 import { GameProvider, useGame, type GameScreen } from "@/lib/game-context";
 import { Button } from "@/components/ui/button";
 
@@ -55,6 +56,10 @@ const animatedScreens: GameScreen[] = [
   "finish",
   "diceLevel",
   "diceFinish",
+  "boxSetup",
+  "boxIntro",
+  "boxStep",
+  "boxFinish",
 ];
 
 function Shell({ children, compact = false }: { children: React.ReactNode; compact?: boolean }) {
@@ -407,13 +412,19 @@ function Menu() {
         </div>
         <ChevronLeft className="h-6 w-6 text-accent" />
       </motion.button>
-      <div className="game-card-disabled">
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setState((s) => ({ ...s, screen: "boxSetup" }))}
+        className="game-card-active mt-4"
+      >
         <span className="game-number">03</span>
         <div>
-          <span className="block text-sm">משחק 3</span>
-          <strong className="mt-1 block text-xl">בקרוב</strong>
+          <span className="block text-sm text-primary/70">משחק 3</span>
+          <strong className="mt-1 block font-display text-3xl">הקופסה הסודית</strong>
+          <span className="mt-2 block text-sm text-muted-foreground">אחד מוביל, השני מתמסר</span>
         </div>
-      </div>
+        <ChevronLeft className="h-6 w-6 text-accent" />
+      </motion.button>
     </Shell>
   );
 }
@@ -590,18 +601,59 @@ function CardAction({ card }: { card: GameCard }) {
       </>
     );
   if (card.type === "song") return <SongAction />;
-  if (card.type === "video")
-    return (
+  if (card.type === "video") return <VideoAction />;
+  return null;
+}
+const scenes = [
+  {
+    title: "365 Days",
+    sub: "סצנת היאכטה · דקה 1:07",
+    href: "https://www.netflix.com/search?q=365+days",
+  },
+  {
+    title: "Sex/Life",
+    sub: "עונה 1 פרק 3 · דקה 19",
+    href: "https://www.netflix.com/search?q=sex+life",
+  },
+  {
+    title: "Bridgerton",
+    sub: "עונה 1 פרק 6 · ירח דבש",
+    href: "https://www.netflix.com/search?q=bridgerton",
+  },
+  {
+    title: "Bridgerton",
+    sub: "עונה 3 פרק 5 · 5 דקות אחרונות",
+    href: "https://www.netflix.com/search?q=bridgerton",
+  },
+];
+function VideoAction() {
+  return (
+    <div className="space-y-2">
+      {scenes.map((s, i) => (
+        <a
+          key={i}
+          href={s.href}
+          target="_blank"
+          rel="noreferrer"
+          className="external-action justify-between"
+        >
+          <span className="text-right">
+            <strong className="block">{s.title}</strong>
+            <small className="text-muted-foreground">{s.sub}</small>
+          </span>
+          <ExternalLink className="h-5 w-5 shrink-0" />
+        </a>
+      ))}
       <a
-        href="https://www.netflix.com/search?q=bridgerton"
+        href="https://www.netflix.com"
         target="_blank"
         rel="noreferrer"
-        className="external-action"
+        className="block text-center text-xs text-muted-foreground underline underline-offset-4"
       >
-        לצפייה בסצנה <ExternalLink className="h-5 w-5" />
+        סצנה אחרת
       </a>
-    );
-  return null;
+    </div>
+  );
 }
 function SongAction() {
   const [started, setStarted] = useState(false);
@@ -632,10 +684,12 @@ function TimerOverlay({
   seconds,
   swap,
   onClose,
+  silent = false,
 }: {
   seconds: number;
   swap: boolean;
   onClose: () => void;
+  silent?: boolean;
 }) {
   const [left, setLeft] = useState(seconds);
   const [running, setRunning] = useState(false);
@@ -649,7 +703,8 @@ function TimerOverlay({
     if (left === 0 && running) {
       setRunning(false);
       try {
-        navigator.vibrate?.(150);
+        navigator.vibrate?.(silent ? [120, 80, 120] : 150);
+        if (silent) throw new Error("silent");
         const ctx = new AudioContext();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -664,7 +719,7 @@ function TimerOverlay({
         /* ignore */
       }
     }
-  }, [left, running]);
+  }, [left, running, silent]);
   const progress = ((seconds - left) / seconds) * 100;
   const secondRound = () => {
     setRound(2);
@@ -1191,6 +1246,210 @@ function DiceFinish() {
   );
 }
 
+function visibleBoxSteps(rope: boolean) {
+  return boxSteps.filter((s) => rope || !s.needsRope);
+}
+
+function BoxSetup() {
+  const { state, setState } = useGame();
+  return (
+    <Shell>
+      <div className="flex items-center justify-between">
+        <Brand />
+        <NewEvening />
+      </div>
+      <p className="eyebrow mt-4">משחק 3</p>
+      <h1 className="screen-title">מי מוביל הערב?</h1>
+      <div className="mt-8 grid grid-cols-2 gap-3">
+        {state.names.map((n, i) => (
+          <Button
+            key={i}
+            variant={state.boxLeader === i ? "default" : "secondary"}
+            className="choice-button"
+            onClick={() => setState((s) => ({ ...s, boxLeader: i as 0 | 1 }))}
+          >
+            {n}
+          </Button>
+        ))}
+      </div>
+      <label className="consent-row mt-8">
+        <input
+          type="checkbox"
+          className="sr-only"
+          checked={state.boxRope}
+          onChange={(e) => setState((s) => ({ ...s, boxRope: e.target.checked }))}
+        />
+        <span className={`checkbox ${state.boxRope ? "checkbox-checked" : ""}`}>
+          {state.boxRope && <Check className="h-4 w-4" />}
+        </span>
+        <span>יש לנו חבל / רצועה</span>
+      </label>
+      <div className="summary-panel mt-6">
+        <p className="font-semibold">מילת עצירה: "עצור"</p>
+        <p className="mt-1 text-sm text-muted-foreground">כשאחד אומר אותה – הכל נעצר מיד.</p>
+      </div>
+      <label className="consent-row mt-4">
+        <input
+          type="checkbox"
+          className="sr-only"
+          checked={state.boxAgreed}
+          onChange={(e) => setState((s) => ({ ...s, boxAgreed: e.target.checked }))}
+        />
+        <span className={`checkbox ${state.boxAgreed ? "checkbox-checked" : ""}`}>
+          {state.boxAgreed && <Check className="h-4 w-4" />}
+        </span>
+        <span>שנינו מסכימים</span>
+      </label>
+      <Button
+        className="mt-auto"
+        disabled={!state.boxAgreed}
+        onClick={() => setState((s) => ({ ...s, boxStepIndex: 0, screen: "boxIntro" }))}
+      >
+        ממשיכים
+      </Button>
+    </Shell>
+  );
+}
+
+function BoxIntro() {
+  const { state, setState } = useGame();
+  return (
+    <Shell>
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <motion.div
+          animate={{ scale: [1, 1.06, 1] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          className="pass-icon"
+        >
+          <Moon className="h-10 w-10" strokeWidth={1.3} />
+        </motion.div>
+        <p className="eyebrow mt-8">הקופסה הסודית</p>
+        <h1 className="mt-3 font-display text-4xl font-bold leading-tight">כסו עיניים</h1>
+        <p className="mt-5 text-muted-foreground">
+          מהרגע הזה רק {state.names[state.boxLeader]} מסתכל/ת על הטלפון
+        </p>
+        <Button
+          className="mt-12 w-full"
+          onClick={() => setState((s) => ({ ...s, screen: "boxStep" }))}
+        >
+          מתחילים
+        </Button>
+      </div>
+    </Shell>
+  );
+}
+
+function BoxStep() {
+  const { state, setState } = useGame();
+  const steps = visibleBoxSteps(state.boxRope);
+  const step = steps[Math.min(state.boxStepIndex, steps.length - 1)];
+  const [timerOpen, setTimerOpen] = useState(false);
+  const [extraOpen, setExtraOpen] = useState(false);
+  if (!step) return null;
+  const last = step.duration === 0;
+  const go = (delta: number) => {
+    const next = state.boxStepIndex + delta;
+    if (next >= steps.length) {
+      setState((s) => ({ ...s, screen: "boxFinish" }));
+      return;
+    }
+    setState((s) => ({ ...s, boxStepIndex: next }));
+  };
+  return (
+    <Shell compact>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-primary">
+          שלב {state.boxStepIndex + 1} מתוך {steps.length}
+        </span>
+        <Button
+          variant="ghost"
+          className="text-xs"
+          onClick={() => setState((s) => ({ ...s, screen: "boxFinish" }))}
+        >
+          ⋯ סיימנו להערב
+        </Button>
+      </div>
+      <motion.article
+        key={step.id}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="task-card category-bold mt-6"
+      >
+        <Sparkles className="h-6 w-6 text-accent" />
+        <h1 className="mt-6 font-display text-4xl font-bold leading-tight">{step.title}</h1>
+        <p className="mt-6 whitespace-pre-line text-lg leading-8 text-card-foreground/90">
+          {step.text}
+        </p>
+      </motion.article>
+      {last ? (
+        <div className="mt-5 grid gap-3">
+          <Button onClick={() => setState((s) => ({ ...s, screen: "boxFinish" }))}>סיימנו</Button>
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-3">
+          <Button onClick={() => setTimerOpen(true)}>
+            <Clock3 className="h-5 w-5" />
+            התחילו · {formatTime(step.duration)}
+          </Button>
+          <Button variant="secondary" onClick={() => go(1)}>
+            השלב הבא
+          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="ghost" onClick={() => setExtraOpen(true)}>
+              עוד דקה כאן
+            </Button>
+            <Button variant="ghost" onClick={() => go(1)}>
+              לדלג
+            </Button>
+          </div>
+        </div>
+      )}
+      <AnimatePresence>
+        {timerOpen && (
+          <TimerOverlay
+            seconds={step.duration}
+            swap={false}
+            silent
+            onClose={() => setTimerOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {extraOpen && (
+          <TimerOverlay seconds={60} swap={false} silent onClose={() => setExtraOpen(false)} />
+        )}
+      </AnimatePresence>
+    </Shell>
+  );
+}
+
+function BoxFinish() {
+  const { state, setState, reset } = useGame();
+  return (
+    <Shell>
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <Moon className="h-16 w-16 text-accent" strokeWidth={1} />
+        <h1 className="mt-8 font-display text-4xl font-bold leading-tight">לילה טוב 🌙</h1>
+        <p className="mt-4 text-muted-foreground">
+          הפעם הוביל/ה {state.names[state.boxLeader]}. פעם הבאה מתחלפים?
+        </p>
+        <Button className="mt-12 w-full" onClick={reset}>
+          ערב חדש
+        </Button>
+        <Button
+          variant="ghost"
+          className="mt-3 w-full"
+          onClick={() =>
+            setState((s) => ({ ...s, boxAgreed: false, boxStepIndex: 0, screen: "menu" }))
+          }
+        >
+          חזרה לתפריט
+        </Button>
+      </div>
+    </Shell>
+  );
+}
+
 function Game() {
   const { state } = useGame();
   let content: React.ReactNode;
@@ -1251,6 +1510,18 @@ function Game() {
       break;
     case "diceFinish":
       content = <DiceFinish />;
+      break;
+    case "boxSetup":
+      content = <BoxSetup />;
+      break;
+    case "boxIntro":
+      content = <BoxIntro />;
+      break;
+    case "boxStep":
+      content = <BoxStep />;
+      break;
+    case "boxFinish":
+      content = <BoxFinish />;
       break;
     default:
       content = <Welcome />;

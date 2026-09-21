@@ -20,7 +20,11 @@ export type GameScreen =
   | "finish"
   | "diceLevel"
   | "diceGame"
-  | "diceFinish";
+  | "diceFinish"
+  | "boxSetup"
+  | "boxIntro"
+  | "boxStep"
+  | "boxFinish";
 type GameState = {
   screen: GameScreen;
   names: [string, string];
@@ -38,6 +42,10 @@ type GameState = {
   dicePasses: [boolean, boolean];
   diceTurn: 0 | 1;
   diceAskedAt: number;
+  boxLeader: 0 | 1;
+  boxRope: boolean;
+  boxStepIndex: number;
+  boxAgreed: boolean;
 };
 const initial: GameState = {
   screen: "welcome",
@@ -56,6 +64,10 @@ const initial: GameState = {
   dicePasses: [false, false],
   diceTurn: 0,
   diceAskedAt: 0,
+  boxLeader: 0,
+  boxRope: false,
+  boxStepIndex: 0,
+  boxAgreed: false,
 };
 type Ctx = {
   state: GameState;
