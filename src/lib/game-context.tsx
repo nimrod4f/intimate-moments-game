@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Category } from "@/data/cards";
 
-export type GameScreen = "welcome"|"place"|"drink"|"names"|"write1"|"pass2"|"choose1"|"write2"|"pass1"|"choose2"|"summary"|"menu"|"categories"|"shuffle"|"card"|"finish";
+export type GameScreen = "welcome"|"place"|"drink"|"names"|"write1"|"pass2"|"choose1"|"write2"|"pass1"|"choose2"|"summary"|"menu"|"categories"|"shuffle"|"card"|"finish"|"diceLevel"|"diceGame"|"diceFinish";
 type GameState = {
  screen: GameScreen; names:[string,string]; place:string; drink:string; options1:string[]; options2:string[]; outfits:[string,string]; opened:Record<Category,number[]>; swapped:Record<Category,boolean>; activeCategory:Category|null; activeCardId:number|null;
+ diceLevel:Category; diceRounds:number; dicePasses:[boolean,boolean]; diceTurn:0|1; diceAskedAt:number;
 };
-const initial:GameState={screen:"welcome",names:["בן זוג 1","בן זוג 2"],place:"",drink:"",options1:["","",""],options2:["","",""],outfits:["",""],opened:{closeness:[],tension:[],bold:[]},swapped:{closeness:false,tension:false,bold:false},activeCategory:null,activeCardId:null};
+const initial:GameState={screen:"welcome",names:["בן זוג 1","בן זוג 2"],place:"",drink:"",options1:["","",""],options2:["","",""],outfits:["",""],opened:{closeness:[],tension:[],bold:[]},swapped:{closeness:false,tension:false,bold:false},activeCategory:null,activeCardId:null,diceLevel:"closeness",diceRounds:0,dicePasses:[false,false],diceTurn:0,diceAskedAt:0};
 type Ctx={state:GameState; setState:React.Dispatch<React.SetStateAction<GameState>>; reset:()=>void};
 const GameContext=createContext<Ctx|undefined>(undefined);
 export function GameProvider({children}:{children:ReactNode}){
