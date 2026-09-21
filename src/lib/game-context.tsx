@@ -89,7 +89,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         },
       }}
     >
-      {children}
+      {hydrated ? children : <div className="min-h-dvh bg-background" />}
     </GameContext.Provider>
   );
 }

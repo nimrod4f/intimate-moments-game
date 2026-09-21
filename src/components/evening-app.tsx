@@ -59,7 +59,7 @@ const animatedScreens: GameScreen[] = [
 
 function Shell({ children, compact = false }: { children: React.ReactNode; compact?: boolean }) {
   return (
-    <main className="min-h-dvh overflow-hidden bg-background text-foreground">
+    <main className="min-h-dvh overflow-x-hidden bg-background text-foreground">
       <div
         className={`mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 ${compact ? "py-6" : "py-10"}`}
       >
@@ -954,13 +954,17 @@ function DiceGame() {
   };
   useEffect(() => {
     if (votes[0] === true && votes[1] === true) {
-      const next = levelOrder[levelOrder.indexOf(level) + 1];
-      if (next) setState((s) => ({ ...s, diceLevel: next }));
+      setVotes([null, null]);
+      setState((s) => {
+        const next = levelOrder[levelOrder.indexOf(s.diceLevel) + 1];
+        return next ? { ...s, diceLevel: next } : s;
+      });
       setAskLevel(false);
     } else if (votes[0] === false || votes[1] === false) {
+      setVotes([null, null]);
       setAskLevel(false);
     }
-  }, [votes, level, setState]);
+  }, [votes, setState]);
   const seconds = result ? (timeSeconds[result[2]!] ?? null) : null;
   return (
     <Shell compact>
