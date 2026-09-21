@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronLeft, Clock3, ExternalLink, Heart, Moon, Pause, Play, RefreshCcw, RotateCcw, Sparkles, Volume2 } from "lucide-react";
+import { Check, ChevronLeft, Clock3, Dices, ExternalLink, Heart, Moon, Pause, Play, RefreshCcw, RotateCcw, Sparkles, Volume2 } from "lucide-react";
 import { cards, type Category, type GameCard } from "@/data/cards";
+import { levels, levelOrder, timeSeconds } from "@/data/dice";
 import { GameProvider, useGame, type GameScreen } from "@/lib/game-context";
 import { Button } from "@/components/ui/button";
 
