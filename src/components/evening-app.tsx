@@ -954,13 +954,17 @@ function DiceGame() {
   };
   useEffect(() => {
     if (votes[0] === true && votes[1] === true) {
-      const next = levelOrder[levelOrder.indexOf(level) + 1];
-      if (next) setState((s) => ({ ...s, diceLevel: next }));
+      setVotes([null, null]);
+      setState((s) => {
+        const next = levelOrder[levelOrder.indexOf(s.diceLevel) + 1];
+        return next ? { ...s, diceLevel: next } : s;
+      });
       setAskLevel(false);
     } else if (votes[0] === false || votes[1] === false) {
+      setVotes([null, null]);
       setAskLevel(false);
     }
-  }, [votes, level, setState]);
+  }, [votes, setState]);
   const seconds = result ? (timeSeconds[result[2]!] ?? null) : null;
   return (
     <Shell compact>
