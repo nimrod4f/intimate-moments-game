@@ -78,13 +78,18 @@ function DiceGame(){
  const turnName=state.names[state.diceTurn];
  const canPass=!state.dicePasses[state.diceTurn];
  const usePass=()=>{setState(s=>({...s,dicePasses:s.dicePasses.map((v,i)=>i===s.diceTurn?true:v) as [boolean,boolean]}));roll()};
- const nextRound=()=>{const rounds=state.diceRounds+1;const ask=level!=="bold"&&rounds%5===0&&rounds>state.diceAskedAt;setState(s=>({...s,diceRounds:rounds,diceTurn:(s.diceTurn===0?1:0) as 0|1,diceAskedAt:ask?rounds:s.diceAskedAt}));setResult(null);if(ask){setVotes([null,null]);setAskLevel(true)}};
+ const nextRound=()=>{const rounds=state.diceRounds+1;const ask=level!=="bold"&&rounds%5===0&&rounds>state.diceAskedAt;setState(s=>({...s,diceRounds:rounds,diceTurn:(s.diceTurn===0?1:0) as 0|1,diceAskedAt:ask?rounds:s.diceAskedAt}));setResult(null);setPrevLocked(locked);setLocked([null,null,null]);setEditing(null);if(ask){setVotes([null,null]);setAskLevel(true)}};
  useEffect(()=>{if(votes[0]===true&&votes[1]===true){const next=levelOrder[levelOrder.indexOf(level)+1];if(next)setState(s=>({...s,diceLevel:next}));setAskLevel(false)}else if(votes[0]===false||votes[1]===false){setAskLevel(false)}},[votes,level,setState]);
  const seconds=result?timeSeconds[result[2]!]??null:null;
  return <Shell compact>
   <div className="flex items-center justify-between"><span className="text-sm font-semibold text-primary">{categoryMeta[level].icon} {categoryMeta[level].title}</span><Button variant="ghost" className="text-xs" onClick={()=>setState(s=>({...s,screen:"diceFinish"}))}>⋯ סיימנו להערב</Button></div>
   <div className="mt-6 text-center"><h1 className="font-display text-3xl font-bold">תור של {turnName}</h1><p className="mt-1 text-sm text-muted-foreground">סיבוב {state.diceRounds+1}</p></div>
-  <div className="mt-8 flex flex-col gap-3">{reels.map((v,i)=><div key={i} className={`reel ${spinning?"reel-spinning":""}`}><span className="font-display text-2xl font-bold">{v}</span></div>)}</div>
+   <p className="mt-6 text-center text-xs text-muted-foreground">לחצו על המנעול כדי לכתוב משלכם</p>
+   <div className="mt-3 flex flex-col gap-3">{reels.map((v,i)=><div key={i} className={`reel relative ${spinning&&locked[i]===null?"reel-spinning":""}`} style={locked[i]!==null?{borderColor:"var(--accent)"}:undefined}>
+    <button type="button" aria-label="נעילה" disabled={locked[i]===null&&lockedCount>=2} onClick={()=>toggleLock(i)} className="absolute start-1 top-1 grid h-11 w-11 place-items-center text-muted-foreground disabled:opacity-30" style={locked[i]!==null?{color:"var(--accent)"}:undefined}>{locked[i]!==null?<Unlock className="h-4 w-4"/>:<Lock className="h-4 w-4"/>}</button>
+    {editing===i?<div className="flex w-full flex-col gap-2 px-8" dir="rtl"><input autoFocus className="text-field min-h-11" placeholder="כתבו משלכם" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")confirmLock(i)}}/><Button variant="secondary" className="min-h-11" disabled={!draft.trim()} onClick={()=>confirmLock(i)}>אישור</Button></div>:<span className="font-display text-2xl font-bold">{v}</span>}
+   </div>)}</div>
+   {!result&&!spinning&&prevLocked.some(Boolean)&&locked.every(v=>v===null)&&<button type="button" className="mt-3 text-center text-xs text-muted-foreground underline underline-offset-4" onClick={()=>{setLocked(prevLocked);setReels(r=>r.map((v,i)=>prevLocked[i]??v))}}>לנעול כמו בסיבוב הקודם</button>}
    {result&&<motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="mt-7 text-center">
     <p className="font-display text-2xl font-bold leading-9">{result.join(" · ")}</p>
    </motion.div>}
