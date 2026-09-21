@@ -85,5 +85,10 @@
 @utility timer-ring { display:grid; height:min(72vw,18rem); width:min(72vw,18rem); place-items:center; border-radius:50%; background:conic-gradient(var(--accent) var(--progress),var(--muted) 0); padding:.65rem; box-shadow:0 0 55px oklch(0.73 0.09 78 / 12%); }
 @utility timer-inner { display:flex; height:100%; width:100%; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; background:var(--background); & span{font-family:var(--font-display);font-size:4.5rem;font-weight:300;line-height:1;font-variant-numeric:tabular-nums} & small{margin-top:1rem;color:var(--muted-foreground)} }
 @utility winner-note { margin-top:1.25rem; display:grid; gap:1rem; border:1px solid var(--accent); border-radius:1rem; background:var(--card); padding:1rem; text-align:center; }
+@utility reel { display:grid; min-height:4.5rem; place-items:center; border:1px solid var(--border); border-radius:1rem; background:var(--card); padding:.75rem 1rem; text-align:center; overflow:hidden; }
+@utility reel-spinning { border-color:var(--accent); opacity:.75; filter:blur(.3px); }
+@utility no-hands-tag { display:inline-block; border-radius:999px; background:oklch(0.52 0.19 22); padding:.35rem 1rem; font-size:.8rem; font-weight:700; color:#fff; }
+@utility level-modal { position:fixed; inset:0; z-index:60; display:grid; place-items:center; background:oklch(0 0 0 / 70%); padding:1.5rem; }
+@utility level-modal-card { width:100%; max-width:22rem; border:1px solid var(--border); border-radius:1.25rem; background:var(--card); padding:1.75rem; text-align:center; color:var(--foreground); }
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
