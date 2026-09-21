@@ -59,7 +59,7 @@ const animatedScreens: GameScreen[] = [
 
 function Shell({ children, compact = false }: { children: React.ReactNode; compact?: boolean }) {
   return (
-    <main className="min-h-dvh overflow-hidden bg-background text-foreground">
+    <main className="min-h-dvh overflow-x-hidden bg-background text-foreground">
       <div
         className={`mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 ${compact ? "py-6" : "py-10"}`}
       >
