@@ -37,5 +37,65 @@ function TimerOverlay({seconds,swap,onClose}:{seconds:number;swap:boolean;onClos
 function GuessResult({onSelect}:{onSelect:()=>void}){const {state}=useGame();const [winner,setWinner]=useState("");if(winner)return <motion.div initial={{opacity:0}} animate={{opacity:1}} className="winner-note"><strong>{winner} בוחר/ת את הקטגוריה הבאה</strong><Button onClick={onSelect}>לבחירת קטגוריה</Button></motion.div>;return <div className="mt-5"><p className="mb-3 text-center font-semibold">מי ניחש נכון?</p><div className="grid grid-cols-2 gap-3">{state.names.map(n=><Button key={n} variant="secondary" onClick={()=>setWinner(n)}>{n}</Button>)}</div></div>}
 function Finish(){const {reset}=useGame();return <Shell><div className="flex flex-1 flex-col items-center justify-center text-center"><Moon className="h-16 w-16 text-accent" strokeWidth={1}/><h1 className="mt-8 font-display text-4xl font-bold leading-tight">סיימתם את כל הקלפים.<br/>לילה טוב 🌙</h1><Button className="mt-12 w-full" onClick={reset}>ערב חדש</Button></div></Shell>}
 function formatTime(total:number){const m=Math.floor(total/60);const s=total%60;return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
-function Game(){const {state}=useGame();let content:React.ReactNode;switch(state.screen){case"welcome":content=<Welcome/>;break;case"place":content=<SetupChoice kind="place"/>;break;case"drink":content=<SetupChoice kind="drink"/>;break;case"names":content=<Names/>;break;case"write1":content=<WriteOptions person={0}/>;break;case"pass2":content=<PassPhone toPerson={1}/>;break;case"choose1":content=<ChooseOutfit chooser={1}/>;break;case"write2":content=<WriteOptions person={1}/>;break;case"pass1":content=<PassPhone toPerson={0}/>;break;case"choose2":content=<ChooseOutfit chooser={0}/>;break;case"summary":content=<Summary/>;break;case"menu":content=<Menu/>;break;case"categories":content=<Categories/>;break;case"shuffle":content=<Shuffle/>;break;case"card":content=<CardView/>;break;case"finish":content=<Finish/>;break;default:content=<Welcome/>}return <AnimatePresence mode="wait"><motion.div key={animatedScreens.includes(state.screen)?state.screen:"game"} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{duration:.25}}>{content}</motion.div></AnimatePresence>}
+function clickSound(){try{const ctx=new AudioContext();const o=ctx.createOscillator();const g=ctx.createGain();o.frequency.value=760;g.gain.setValueAtTime(.05,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.15);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.15)}catch{}}
+
+function DiceLevel(){const {state,setState}=useGame();return <Shell><div className="flex items-center justify-between"><Brand/><NewEvening/></div><p className="eyebrow mt-4">משחק הקוביות</p><h1 className="screen-title">באיזו רמה מתחילים?</h1><div className="mt-9 flex flex-col gap-4">{levelOrder.map((cat,i)=>{const m=categoryMeta[cat];return <motion.button key={cat} initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{delay:i*.08}} whileTap={{scale:.98}} onClick={()=>setState(s=>({...s,diceLevel:cat,diceRounds:0,diceTurn:0,diceAskedAt:0,screen:"diceGame"}))} className={`category-button ${m.className}`}><span className="text-3xl">{m.icon}</span><span className="flex-1 text-right"><strong className="block font-display text-2xl">{m.title}</strong></span><ChevronLeft className="h-5 w-5"/></motion.button>})}</div><p className="mt-6 text-center text-sm text-muted-foreground">אפשר לעלות רמה תוך כדי המשחק</p><p className="sr-only">{state.names.join(" ו")}</p></Shell>}
+
+function DiceGame(){
+ const {state,setState}=useGame();
+ const level=state.diceLevel;const data=levels[level];const hasProp=level==="bold";
+ const pools=useMemo(()=>[data.actions,data.places,data.times,...(hasProp&&data.props?[data.props]:[])],[data,hasProp]);
+ const [reels,setReels]=useState<string[]>(()=>pools.map(p=>p[0]!));
+ const [spinning,setSpinning]=useState(false);
+ const [result,setResult]=useState<{parts:string[];noHands:boolean}|null>(null);
+ const [timerOpen,setTimerOpen]=useState(false);
+ const [watchOpen,setWatchOpen]=useState(false);
+ const [askLevel,setAskLevel]=useState(false);
+ const [votes,setVotes]=useState<[boolean|null,boolean|null]>([null,null]);
+ const cleanup=useRef<number[]>([]);
+ useEffect(()=>()=>{cleanup.current.forEach(id=>window.clearTimeout(id))},[]);
+ const roll=()=>{
+  if(spinning)return;setResult(null);setSpinning(true);
+  const finals=pools.map(p=>p[Math.floor(Math.random()*p.length)]!);
+  const settled=pools.map(()=>false);
+  const spin=window.setInterval(()=>setReels(pools.map((p,i)=>settled[i]?finals[i]!:p[Math.floor(Math.random()*p.length)]!)),70);
+  pools.forEach((_,i)=>{const t=window.setTimeout(()=>{settled[i]=true;clickSound();setReels(r=>r.map((v,j)=>j===i?finals[i]!:v))},700+i*350);cleanup.current.push(t)});
+  const end=window.setTimeout(()=>{window.clearInterval(spin);setReels(finals);setSpinning(false);setResult({parts:finals,noHands:level!=="closeness"&&Math.random()<.2})},700+pools.length*350);
+  cleanup.current.push(end);
+ };
+ const turnName=state.names[state.diceTurn];
+ const canPass=!state.dicePasses[state.diceTurn];
+ const usePass=()=>{setState(s=>({...s,dicePasses:s.dicePasses.map((v,i)=>i===s.diceTurn?true:v) as [boolean,boolean]}));roll()};
+ const nextRound=()=>{const rounds=state.diceRounds+1;const ask=level!=="bold"&&rounds%5===0&&rounds>state.diceAskedAt;setState(s=>({...s,diceRounds:rounds,diceTurn:(s.diceTurn===0?1:0) as 0|1,diceAskedAt:ask?rounds:s.diceAskedAt}));setResult(null);if(ask){setVotes([null,null]);setAskLevel(true)}};
+ useEffect(()=>{if(votes[0]===true&&votes[1]===true){const next=levelOrder[levelOrder.indexOf(level)+1];if(next)setState(s=>({...s,diceLevel:next}));setAskLevel(false)}else if(votes[0]===false||votes[1]===false){setAskLevel(false)}},[votes,level,setState]);
+ const seconds=result?timeSeconds[result.parts[2]!]??null:null;
+ return <Shell compact>
+  <div className="flex items-center justify-between"><span className="text-sm font-semibold text-primary">{categoryMeta[level].icon} {categoryMeta[level].title}</span><Button variant="ghost" className="text-xs" onClick={()=>setState(s=>({...s,screen:"diceFinish"}))}>⋯ סיימנו להערב</Button></div>
+  <div className="mt-6 text-center"><h1 className="font-display text-3xl font-bold">תור של {turnName}</h1><p className="mt-1 text-sm text-muted-foreground">סיבוב {state.diceRounds+1}</p></div>
+  <div className="mt-8 flex flex-col gap-3">{reels.map((v,i)=><div key={i} className={`reel ${spinning?"reel-spinning":""}`}><span className="font-display text-2xl font-bold">{v}</span></div>)}</div>
+  {result&&<motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="mt-7 text-center">
+   {result.noHands&&<span className="no-hands-tag">בלי ידיים 🚫</span>}
+   <p className="mt-3 font-display text-2xl font-bold leading-9">{result.parts.slice(0,3).join(" · ")}</p>
+   {hasProp&&result.parts[3]&&<p className="mt-2 text-muted-foreground">אביזר: {result.parts[3]}</p>}
+  </motion.div>}
+  <div className="mt-auto grid gap-3 pt-8">
+   {!result?<Button onClick={roll} disabled={spinning} className="h-16 text-xl"><Dices className="h-6 w-6"/>{spinning?"מגלגלים…":"גלגלו 🎲"}</Button>:<>
+    <Button onClick={()=>seconds?setTimerOpen(true):setWatchOpen(true)}><Clock3 className="h-5 w-5"/>התחילו</Button>
+    <Button variant="secondary" onClick={nextRound}>הסיבוב הבא</Button>
+   </>}
+   {canPass&&<Button variant="ghost" className="text-xs" onClick={usePass}><RotateCcw className="h-4 w-4"/>פאס</Button>}
+  </div>
+  <AnimatePresence>{timerOpen&&seconds&&<TimerOverlay seconds={seconds} swap={false} onClose={()=>setTimerOpen(false)}/>}</AnimatePresence>
+  <AnimatePresence>{watchOpen&&<StopwatchOverlay onClose={()=>setWatchOpen(false)}/>}</AnimatePresence>
+  <AnimatePresence>{askLevel&&<LevelModal votes={votes} setVotes={setVotes} onClose={()=>setAskLevel(false)}/>}</AnimatePresence>
+ </Shell>;
+}
+
+function LevelModal({votes,setVotes,onClose}:{votes:[boolean|null,boolean|null];setVotes:React.Dispatch<React.SetStateAction<[boolean|null,boolean|null]>>;onClose:()=>void}){const {state}=useGame();return createPortal(<motion.div className="level-modal" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><div className="level-modal-card"><h2 className="font-display text-3xl font-bold">לעלות רמה?</h2><p className="mt-2 text-sm text-muted-foreground">עולים רק אם שניכם מסכימים</p><div className="mt-7 grid gap-3">{state.names.map((n,i)=><Button key={i} variant={votes[i]?"default":"secondary"} onClick={()=>setVotes(v=>v.map((x,j)=>j===i?true:x) as [boolean|null,boolean|null])}>{n} — כן{votes[i]?" ✓":""}</Button>)}<Button variant="ghost" onClick={onClose}>לא עכשיו</Button></div></div></motion.div>,document.body)}
+
+function StopwatchOverlay({onClose}:{onClose:()=>void}){const [sec,setSec]=useState(0);useEffect(()=>{const i=setInterval(()=>setSec(s=>s+1),1000);return()=>clearInterval(i)},[]);return createPortal(<motion.div className="timer-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><button className="timer-close" onClick={onClose} aria-label="סגירה">×</button><p className="eyebrow">עד שהשני אומר די</p><div className="timer-ring mt-12" style={{"--progress":`${(sec%60)*6}deg`} as React.CSSProperties}><div className="timer-inner"><span>{formatTime(sec)}</span><small>הזמן רץ</small></div></div><Button className="mt-12 w-full" onClick={onClose}>די</Button></motion.div>,document.body)}
+
+function DiceFinish(){const {state,reset}=useGame();const passes=state.dicePasses.filter(Boolean).length;return <Shell><div className="flex flex-1 flex-col items-center justify-center text-center"><Moon className="h-16 w-16 text-accent" strokeWidth={1}/><h1 className="mt-8 font-display text-4xl font-bold leading-tight">{state.diceRounds} סיבובים · {passes} פאסים<br/>לילה טוב 🌙</h1><Button className="mt-12 w-full" onClick={reset}>ערב חדש</Button></div></Shell>}
+
+function Game(){const {state}=useGame();let content:React.ReactNode;switch(state.screen){case"welcome":content=<Welcome/>;break;case"place":content=<SetupChoice kind="place"/>;break;case"drink":content=<SetupChoice kind="drink"/>;break;case"names":content=<Names/>;break;case"write1":content=<WriteOptions person={0}/>;break;case"pass2":content=<PassPhone toPerson={1}/>;break;case"choose1":content=<ChooseOutfit chooser={1}/>;break;case"write2":content=<WriteOptions person={1}/>;break;case"pass1":content=<PassPhone toPerson={0}/>;break;case"choose2":content=<ChooseOutfit chooser={0}/>;break;case"summary":content=<Summary/>;break;case"menu":content=<Menu/>;break;case"categories":content=<Categories/>;break;case"shuffle":content=<Shuffle/>;break;case"card":content=<CardView/>;break;case"finish":content=<Finish/>;break;case"diceLevel":content=<DiceLevel/>;break;case"diceGame":content=<DiceGame/>;break;case"diceFinish":content=<DiceFinish/>;break;default:content=<Welcome/>}return <AnimatePresence mode="wait"><motion.div key={animatedScreens.includes(state.screen)?state.screen:"game"} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-6}} transition={{duration:.25}}>{content}</motion.div></AnimatePresence>}
 export function EveningApp(){return <GameProvider><Game/></GameProvider>}
