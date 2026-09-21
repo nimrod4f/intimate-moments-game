@@ -87,7 +87,6 @@
 @utility winner-note { margin-top:1.25rem; display:grid; gap:1rem; border:1px solid var(--accent); border-radius:1rem; background:var(--card); padding:1rem; text-align:center; }
 @utility reel { display:grid; min-height:4.5rem; place-items:center; border:1px solid var(--border); border-radius:1rem; background:var(--card); padding:.75rem 1rem; text-align:center; overflow:hidden; }
 @utility reel-spinning { border-color:var(--accent); opacity:.75; filter:blur(.3px); }
-@utility no-hands-tag { display:inline-block; border-radius:999px; background:oklch(0.52 0.19 22); padding:.35rem 1rem; font-size:.8rem; font-weight:700; color:#fff; }
 @utility level-modal { position:fixed; inset:0; z-index:60; display:grid; place-items:center; background:oklch(0 0 0 / 70%); padding:1.5rem; }
 @utility level-modal-card { width:100%; max-width:22rem; border:1px solid var(--border); border-radius:1.25rem; background:var(--card); padding:1.75rem; text-align:center; color:var(--foreground); }
 

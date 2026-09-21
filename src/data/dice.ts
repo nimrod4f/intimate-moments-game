@@ -7,12 +7,10 @@ const tensionPlaces = [...closenessPlaces, "ירכיים", "בטן", "חזה (מ
 const boldPlaces = [...tensionPlaces, "חזה", "ישבן", "אזור אינטימי", "מקום שבן/בת הזוג בוחר/ת"];
 
 export const times = ["30 שניות", "1 דקה", "2 דקות", "עד שהשני אומר די"];
-export const props = ["כלום", "קרח", "נוצה", "סירופ מייפל", "כיסוי עיניים", "שמן"];
-
-export const levels: Record<Category, { actions: string[]; places: string[]; times: string[]; props?: string[] }> = {
+export const levels: Record<Category, { actions: string[]; places: string[]; times: string[] }> = {
   closeness: { actions, places: closenessPlaces, times },
   tension: { actions, places: tensionPlaces, times },
-  bold: { actions, places: boldPlaces, times, props },
+  bold: { actions, places: boldPlaces, times },
 };
 
 export const timeSeconds: Record<string, number | null> = {

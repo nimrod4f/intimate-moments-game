@@ -43,11 +43,11 @@ function DiceLevel(){const {state,setState}=useGame();return <Shell><div classNa
 
 function DiceGame(){
  const {state,setState}=useGame();
- const level=state.diceLevel;const data=levels[level];const hasProp=level==="bold";
- const pools=useMemo(()=>[data.actions,data.places,data.times,...(hasProp&&data.props?[data.props]:[])],[data,hasProp]);
+ const level=state.diceLevel;const data=levels[level];
+ const pools=useMemo(()=>[data.actions,data.places,data.times],[data]);
  const [reels,setReels]=useState<string[]>(()=>pools.map(p=>p[0]!));
  const [spinning,setSpinning]=useState(false);
- const [result,setResult]=useState<{parts:string[];noHands:boolean}|null>(null);
+ const [result,setResult]=useState<string[]|null>(null);
  const [timerOpen,setTimerOpen]=useState(false);
  const [watchOpen,setWatchOpen]=useState(false);
  const [askLevel,setAskLevel]=useState(false);
@@ -60,7 +60,7 @@ function DiceGame(){
   const settled=pools.map(()=>false);
   const spin=window.setInterval(()=>setReels(pools.map((p,i)=>settled[i]?finals[i]!:p[Math.floor(Math.random()*p.length)]!)),70);
   pools.forEach((_,i)=>{const t=window.setTimeout(()=>{settled[i]=true;clickSound();setReels(r=>r.map((v,j)=>j===i?finals[i]!:v))},700+i*350);cleanup.current.push(t)});
-  const end=window.setTimeout(()=>{window.clearInterval(spin);setReels(finals);setSpinning(false);setResult({parts:finals,noHands:level!=="closeness"&&Math.random()<.2})},700+pools.length*350);
+  const end=window.setTimeout(()=>{window.clearInterval(spin);setReels(finals);setSpinning(false);setResult(finals)},700+pools.length*350);
   cleanup.current.push(end);
  };
  const turnName=state.names[state.diceTurn];
@@ -68,16 +68,14 @@ function DiceGame(){
  const usePass=()=>{setState(s=>({...s,dicePasses:s.dicePasses.map((v,i)=>i===s.diceTurn?true:v) as [boolean,boolean]}));roll()};
  const nextRound=()=>{const rounds=state.diceRounds+1;const ask=level!=="bold"&&rounds%5===0&&rounds>state.diceAskedAt;setState(s=>({...s,diceRounds:rounds,diceTurn:(s.diceTurn===0?1:0) as 0|1,diceAskedAt:ask?rounds:s.diceAskedAt}));setResult(null);if(ask){setVotes([null,null]);setAskLevel(true)}};
  useEffect(()=>{if(votes[0]===true&&votes[1]===true){const next=levelOrder[levelOrder.indexOf(level)+1];if(next)setState(s=>({...s,diceLevel:next}));setAskLevel(false)}else if(votes[0]===false||votes[1]===false){setAskLevel(false)}},[votes,level,setState]);
- const seconds=result?timeSeconds[result.parts[2]!]??null:null;
+ const seconds=result?timeSeconds[result[2]!]??null:null;
  return <Shell compact>
   <div className="flex items-center justify-between"><span className="text-sm font-semibold text-primary">{categoryMeta[level].icon} {categoryMeta[level].title}</span><Button variant="ghost" className="text-xs" onClick={()=>setState(s=>({...s,screen:"diceFinish"}))}>⋯ סיימנו להערב</Button></div>
   <div className="mt-6 text-center"><h1 className="font-display text-3xl font-bold">תור של {turnName}</h1><p className="mt-1 text-sm text-muted-foreground">סיבוב {state.diceRounds+1}</p></div>
   <div className="mt-8 flex flex-col gap-3">{reels.map((v,i)=><div key={i} className={`reel ${spinning?"reel-spinning":""}`}><span className="font-display text-2xl font-bold">{v}</span></div>)}</div>
-  {result&&<motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="mt-7 text-center">
-   {result.noHands&&<span className="no-hands-tag">בלי ידיים 🚫</span>}
-   <p className="mt-3 font-display text-2xl font-bold leading-9">{result.parts.slice(0,3).join(" · ")}</p>
-   {hasProp&&result.parts[3]&&<p className="mt-2 text-muted-foreground">אביזר: {result.parts[3]}</p>}
-  </motion.div>}
+   {result&&<motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} className="mt-7 text-center">
+    <p className="font-display text-2xl font-bold leading-9">{result.join(" · ")}</p>
+   </motion.div>}
   <div className="mt-auto grid gap-3 pt-8">
    {!result?<Button onClick={roll} disabled={spinning} className="h-16 text-xl"><Dices className="h-6 w-6"/>{spinning?"מגלגלים…":"גלגלו 🎲"}</Button>:<>
     <Button onClick={()=>seconds?setTimerOpen(true):setWatchOpen(true)}><Clock3 className="h-5 w-5"/>התחילו</Button>
