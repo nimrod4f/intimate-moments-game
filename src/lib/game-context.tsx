@@ -1,0 +1,17 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { Category } from "@/data/cards";
+
+export type GameScreen = "welcome"|"place"|"drink"|"names"|"write1"|"pass2"|"choose1"|"write2"|"pass1"|"choose2"|"summary"|"menu"|"categories"|"shuffle"|"card"|"finish";
+type GameState = {
+ screen: GameScreen; names:[string,string]; place:string; drink:string; options1:string[]; options2:string[]; outfits:[string,string]; opened:Record<Category,number[]>; swapped:Record<Category,boolean>; activeCategory:Category|null; activeCardId:number|null;
+};
+const initial:GameState={screen:"welcome",names:["בן זוג 1","בן זוג 2"],place:"",drink:"",options1:["","",""],options2:["","",""],outfits:["",""],opened:{closeness:[],tension:[],bold:[]},swapped:{closeness:false,tension:false,bold:false},activeCategory:null,activeCardId:null};
+type Ctx={state:GameState; setState:React.Dispatch<React.SetStateAction<GameState>>; reset:()=>void};
+const GameContext=createContext<Ctx|undefined>(undefined);
+export function GameProvider({children}:{children:ReactNode}){
+ const [state,setState]=useState<GameState>(initial); const [hydrated,setHydrated]=useState(false);
+ useEffect(()=>{try{const saved=localStorage.getItem("evening-game");if(saved)setState({...initial,...JSON.parse(saved)});}catch{}setHydrated(true)},[]);
+ useEffect(()=>{if(hydrated)localStorage.setItem("evening-game",JSON.stringify(state))},[state,hydrated]);
+ return <GameContext.Provider value={{state,setState,reset:()=>{localStorage.removeItem("evening-game");setState(initial)}}}>{children}</GameContext.Provider>;
+}
+export function useGame(){const value=useContext(GameContext);if(!value)throw new Error("useGame must be inside GameProvider");return value}
